@@ -66,6 +66,48 @@ export function login({ email, password }) {
   return sessionUser;
 }
 
+export function updateProfile({ id, name, email }) {
+  const users = getUsers();
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const existingUser = users.find(
+    (user) => user.email === normalizedEmail && user.id !== id
+  );
+
+  if (existingUser) {
+    throw new Error("An account with this email already exists.");
+  }
+
+  const updatedUsers = users.map((user) =>
+    user.id === id
+      ? {
+          ...user,
+          name: name.trim(),
+          email: normalizedEmail,
+        }
+      : user
+  );
+
+  const updatedUser = updatedUsers.find((user) => user.id === id);
+
+  if (!updatedUser) {
+    throw new Error("User account not found.");
+  }
+
+  saveUsers(updatedUsers);
+
+  const sessionUser = {
+    id: updatedUser.id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+  };
+
+  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+
+  return sessionUser;
+}
+
 export function logout() {
   localStorage.removeItem(SESSION_KEY);
 }

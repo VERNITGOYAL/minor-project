@@ -5,6 +5,7 @@ import {
   login as loginService,
   signup as signupService,
   logout as logoutService,
+  updateProfile as updateProfileService,
 } from "../services/authService";
 
 let state = {
@@ -64,6 +65,33 @@ export async function signup(userData) {
 
   try {
     const user = signupService(userData);
+
+    setState({
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+      error: "",
+    });
+
+    return user;
+  } catch (error) {
+    setState({
+      isLoading: false,
+      error: error.message,
+    });
+
+    throw error;
+  }
+}
+
+export async function updateProfile(profileData) {
+  setState({
+    isLoading: true,
+    error: "",
+  });
+
+  try {
+    const user = updateProfileService(profileData);
 
     setState({
       user,

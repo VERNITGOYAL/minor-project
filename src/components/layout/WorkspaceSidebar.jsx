@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Bot,
   ChevronRight,
@@ -7,12 +7,14 @@ import {
   GraduationCap,
   LayoutDashboard,
   Library,
+  LogOut,
   Network,
   Search,
   Settings,
   Upload,
   X,
 } from "lucide-react";
+import { logout } from "../../store/authStore";
 
 const navigation = [
   { label: "Home", icon: LayoutDashboard, path: "/dashboard" },
@@ -26,7 +28,28 @@ const navigation = [
   { label: "Settings", icon: Settings, path: "/settings" },
 ];
 
-function WorkspaceSidebar({ isOpen, onClose, activeView }) {
+function getInitials(name = "Research User") {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function WorkspaceSidebar({ isOpen, onClose, activeView, user }) {
+  const navigate = useNavigate();
+  const displayName = user?.name || "Research User";
+  const displayEmail = user?.email || "No email available";
+  const initials = getInitials(displayName);
+
+  function handleLogout() {
+    logout();
+    onClose();
+    navigate("/login", { replace: true });
+  }
+
   return (
     <>
       {isOpen ? <button className="fixed inset-0 z-30 bg-[#102c3d]/40 lg:hidden" aria-label="Close navigation" onClick={onClose} /> : null}
@@ -34,7 +57,7 @@ function WorkspaceSidebar({ isOpen, onClose, activeView }) {
         <div className="flex items-center justify-between px-3 pb-8"><NavLink to="/dashboard" onClick={onClose} className="flex items-center gap-2.5 text-[19px] font-extrabold tracking-[-.5px] text-[#173c5d]"><span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[#173c5d] text-white"><GraduationCap size={19} /></span><span>Research<span className="text-[#2d98a6]">AI</span></span></NavLink><button className="grid h-8 w-8 place-items-center rounded-md text-[#788598] hover:bg-[#f2f7f9] lg:hidden" onClick={onClose} aria-label="Close navigation"><X size={18} /></button></div>
         <p className="px-3 pb-2 text-[10px] font-extrabold tracking-[1.25px] text-[#9aa7b6]">WORKSPACE</p>
         <nav className="grid gap-1" aria-label="Workspace navigation">{navigation.map(({ label, icon: Icon, path }) => <NavLink key={label} to={path} onClick={onClose} className={({ isActive }) => `group flex min-h-10 items-center gap-3 rounded-[7px] px-3 text-[13px] font-semibold transition-colors ${isActive || label === activeView ? "bg-[#eaf5f7] text-[#126b91]" : "text-[#7a899a] hover:bg-[#f2f7f9] hover:text-[#173c5d]"}`}><Icon size={16} strokeWidth={1.8} /><span>{label}</span></NavLink>)}</nav>
-        <NavLink to="/profile" onClick={onClose} className="mt-auto flex items-center gap-2 rounded-lg border-t border-[#e1e7ec] px-2 pt-3 text-left hover:bg-[#f2f7f9]"><div className="grid h-8 w-8 place-items-center rounded-full bg-[#dff1f0] text-[10px] font-extrabold text-[#2a8290]">JD</div><div className="grid min-w-0 flex-1 gap-0.5"><strong className="truncate text-xs text-[#233044]">John Doe</strong><span className="text-[10px] text-[#a0aab7]">Student account</span></div><ChevronRight size={15} className="text-[#a0aab7]" /></NavLink>
+        <div className="mt-auto border-t border-[#e1e7ec] pt-3"><NavLink to="/profile" onClick={onClose} className="flex items-center gap-2 rounded-lg px-2 text-left hover:bg-[#f2f7f9]"><div className="grid h-8 w-8 place-items-center rounded-full bg-[#dff1f0] text-[10px] font-extrabold text-[#2a8290]">{initials}</div><div className="grid min-w-0 flex-1 gap-0.5"><strong className="truncate text-xs text-[#233044]">{displayName}</strong><span className="truncate text-[10px] text-[#a0aab7]">{displayEmail}</span></div><ChevronRight size={15} className="text-[#a0aab7]" /></NavLink><button type="button" onClick={handleLogout} className="mt-2 flex min-h-9 w-full items-center gap-3 rounded-[7px] px-3 text-[13px] font-semibold text-[#9a6a6a] transition-colors hover:bg-[#fff1f1] hover:text-[#b34f4f]"><LogOut size={16} strokeWidth={1.8} /><span>Log out</span></button></div>
       </aside>
     </>
   );

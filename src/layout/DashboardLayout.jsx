@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronRight, HelpCircle, Menu } from "lucide-react";
 import { Outlet, useLocation } from "react-router-dom";
 import WorkspaceSidebar from "../components/layout/WorkspaceSidebar";
+import { useAuthStore } from "../store/authStore";
 
 const viewNames = {
   "/dashboard": "Home",
@@ -18,11 +19,12 @@ const viewNames = {
 function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { pathname } = useLocation();
+  const { user } = useAuthStore();
   const activeView = viewNames[pathname] || "Workspace";
 
   return (
     <div className="flex min-h-screen bg-[#f6f8fa]">
-      <WorkspaceSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} activeView={activeView} />
+      <WorkspaceSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} activeView={activeView} user={user} />
       <main className="min-w-0 flex-1">
         <div className="flex h-16 items-center justify-between border-b border-[#e1e7ec] px-4 sm:h-[76px] sm:px-8 lg:px-10">
           <button className="grid h-9 w-9 place-items-center rounded-md border border-[#e1e7ec] bg-white text-[#536477] lg:hidden" onClick={() => setIsSidebarOpen(true)} aria-label="Open navigation">
