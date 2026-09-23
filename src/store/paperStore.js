@@ -1,13 +1,12 @@
 import { useSyncExternalStore } from "react";
 import {
   getPapers,
-  addPaper,
   removePaper,
-  clearPapers,
+  uploadPaper,
 } from "../services/paperService";
 
 let state = {
-  papers: getPapers(),
+  papers: [],
   selectedPaper: null,
 };
 
@@ -26,35 +25,29 @@ function setState(nextState) {
   emit();
 }
 
-export function addPaperToStore(paper) {
-  const newPaper = addPaper(paper);
+export async function loadPapers() {
+  const papers = await getPapers();
+  setState({ papers });
+  return papers;
+}
 
-  setState({
-    papers: [...state.papers, newPaper],
-  });
-
+export async function addPaperToStore(file) {
+  const newPaper = await uploadPaper(file);
+  setState({ papers: [newPaper, ...state.papers] });
   return newPaper;
 }
 
-export function removePaperFromStore(id) {
-  const updatedPapers = removePaper(id);
-
+export async function removePaperFromStore(id) {
+  await removePaper(id);
   setState({
-    papers: updatedPapers,
-    selectedPaper:
-      state.selectedPaper?.id === id
-        ? null
-        : state.selectedPaper,
+    papers: state.papers.filter((paper) => paper.id !== id),
+    selectedPaper: state.selectedPaper?.id === id ? null : state.selectedPaper,
   });
 }
 
-export function clearAllPapers() {
-  clearPapers();
-
-  setState({
-    papers: [],
-    selectedPaper: null,
-  });
+export async function clearAllPapers() {
+  await Promise.all(state.papers.map((paper) => removePaper(paper.id)));
+  setState({ papers: [], selectedPaper: null });
 }
 
 export function selectPaper(paper) {

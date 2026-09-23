@@ -13,6 +13,8 @@ import ResearchGaps from "../pages/research-gaps/ResearchGaps";
 import Settings from "../pages/settings/Settings";
 import DashboardLayout from "../layout/DashboardLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import VerifyOTP from "../pages/auth/VerifyOTP";
+import PasswordReset from "../pages/auth/PasswordReset";
 
 function AppRoutes() {
   return (
@@ -21,6 +23,8 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/verify-email" element={<VerifyOTP />} />
+        <Route path="/reset-password" element={<PasswordReset />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>

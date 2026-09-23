@@ -1,124 +1,190 @@
-const USERS_KEY = "researchai-users";
+const API_URL = "http://127.0.0.1:8000";
+
 const SESSION_KEY = "researchai-session";
 
-function getUsers() {
+async function request(endpoint, options = {}) {
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  let data = {};
+
   try {
-    return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+    data = await response.json();
   } catch {
-    return [];
+    data = {};
   }
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail || "Something went wrong. Please try again."
+    );
+  }
+
+  return data;
 }
 
-function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
 
-export function signup({ name, email, password }) {
-  const users = getUsers();
+// --------------------------------
+// SIGNUP
+// --------------------------------
 
+export async function signup({ name, email, password }) {
   const normalizedEmail = email.trim().toLowerCase();
 
-  const existingUser = users.find(
-    (user) => user.email === normalizedEmail
-  );
+  const data = await request("/auth/signup", {
+    method: "POST",
+    body: JSON.stringify({
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+    }),
+  });
 
-  if (existingUser) {
-    throw new Error("An account with this email already exists.");
-  }
+  // IMPORTANT:
+  // Do NOT create a logged-in session here.
+  // The user still needs to verify the OTP.
 
-  const user = {
-    id: crypto.randomUUID(),
-    name: name.trim(),
-    email: normalizedEmail,
-    password,
+  return {
+    email: data.email || normalizedEmail,
+    message: data.message,
   };
-
-  saveUsers([...users, user]);
-
-  const sessionUser = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  };
-
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-
-  return sessionUser;
 }
 
-export function login({ email, password }) {
-  const users = getUsers();
 
-  const normalizedEmail = email.trim().toLowerCase();
-  const user = users.find((item) => item.email === normalizedEmail);
+// --------------------------------
+// VERIFY EMAIL OTP
+// --------------------------------
 
-  if (!user) throw new Error("No account exists for this email. Create an account first.");
-  if (user.password !== password) throw new Error("Incorrect password. Try again or create a new account.");
-
-  const sessionUser = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  };
-
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-
-  return sessionUser;
-}
-
-export function updateProfile({ id, name, email }) {
-  const users = getUsers();
-
+export async function verifyOTP({ email, otp }) {
   const normalizedEmail = email.trim().toLowerCase();
 
-  const existingUser = users.find(
-    (user) => user.email === normalizedEmail && user.id !== id
-  );
+  const data = await request("/auth/verify-otp", {
+    method: "POST",
+    body: JSON.stringify({
+      email: normalizedEmail,
+      otp: otp.trim(),
+    }),
+  });
 
-  if (existingUser) {
-    throw new Error("An account with this email already exists.");
+  const user = data.user;
+
+  if (user) {
+    localStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify(user)
+    );
   }
 
-  const updatedUsers = users.map((user) =>
-    user.id === id
-      ? {
-          ...user,
-          name: name.trim(),
-          email: normalizedEmail,
-        }
-      : user
-  );
-
-  const updatedUser = updatedUsers.find((user) => user.id === id);
-
-  if (!updatedUser) {
-    throw new Error("User account not found.");
-  }
-
-  saveUsers(updatedUsers);
-
-  const sessionUser = {
-    id: updatedUser.id,
-    name: updatedUser.name,
-    email: updatedUser.email,
-  };
-
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-
-  return sessionUser;
+  return user;
 }
+
+
+// --------------------------------
+// RESEND OTP
+// --------------------------------
+
+export async function resendOTP({ email }) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const data = await request("/auth/resend-otp", {
+    method: "POST",
+    body: JSON.stringify({
+      email: normalizedEmail,
+    }),
+  });
+
+  return data;
+}
+
+
+// --------------------------------
+// LOGIN
+// --------------------------------
+
+export async function login({ email, password }) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const data = await request("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({
+      email: normalizedEmail,
+      password,
+    }),
+  });
+
+  const user = data.user;
+
+  if (user) {
+    localStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify(user)
+    );
+  }
+
+  return user;
+}
+
+
+// --------------------------------
+// UPDATE PROFILE
+// --------------------------------
+
+export async function updateProfile({ id, name, email }) {
+  const data = await request("/auth/profile", {
+    method: "PUT",
+    body: JSON.stringify({
+      id,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+    }),
+  });
+
+  const user = data.user;
+
+  if (user) {
+    localStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify(user)
+    );
+  }
+
+  return user;
+}
+
+
+// --------------------------------
+// LOGOUT
+// --------------------------------
 
 export function logout() {
   localStorage.removeItem(SESSION_KEY);
 }
 
+
+// --------------------------------
+// CURRENT USER
+// --------------------------------
+
 export function getCurrentUser() {
   try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY)) || null;
+    return JSON.parse(
+      localStorage.getItem(SESSION_KEY)
+    ) || null;
   } catch {
     return null;
   }
 }
+
+
+// --------------------------------
+// AUTH CHECK
+// --------------------------------
 
 export function isAuthenticated() {
   return Boolean(getCurrentUser());

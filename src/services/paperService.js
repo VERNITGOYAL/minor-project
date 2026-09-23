@@ -1,44 +1,64 @@
-const PAPERS_KEY = "researchai-papers";
+const API_URL = "http://127.0.0.1:8000";
+const ACCESS_TOKEN_KEY = "researchai-access-token";
 
-function getStoredPapers() {
-  try {
-    return JSON.parse(localStorage.getItem(PAPERS_KEY)) || [];
-  } catch {
-    return [];
+function authHeaders() {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function parseResponse(response, fallback) {
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.detail || fallback);
   }
+
+  return data;
 }
 
-function savePapers(papers) {
-  localStorage.setItem(PAPERS_KEY, JSON.stringify(papers));
+export async function getPapers() {
+  const response = await fetch(`${API_URL}/api/papers`, {
+    headers: authHeaders(),
+  });
+  const data = await parseResponse(response, "Unable to load papers.");
+  return data.papers;
 }
 
-export function getPapers() {
-  return getStoredPapers();
+export async function uploadPaper(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/api/papers/upload`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: formData,
+  });
+
+  const data = await parseResponse(response, "Unable to upload paper.");
+  return data.paper;
 }
 
-export function addPaper(paper) {
-  const papers = getStoredPapers();
+export async function removePaper(id) {
+  const response = await fetch(`${API_URL}/api/papers/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
 
-  const newPaper = {
-    id: crypto.randomUUID(),
-    ...paper,
-    createdAt: new Date().toISOString(),
-  };
-
-  savePapers([...papers, newPaper]);
-
-  return newPaper;
+  await parseResponse(response, "Unable to delete paper.");
+  return id;
 }
 
-export function removePaper(id) {
-  const papers = getStoredPapers();
-  const updatedPapers = papers.filter((paper) => paper.id !== id);
+export async function openPaper(id) {
+  const response = await fetch(`${API_URL}/api/papers/${id}/file`, {
+    headers: authHeaders(),
+  });
 
-  savePapers(updatedPapers);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail || "Unable to open paper.");
+  }
 
-  return updatedPapers;
-}
-
-export function clearPapers() {
-  localStorage.removeItem(PAPERS_KEY);
+  const blobUrl = URL.createObjectURL(await response.blob());
+  window.open(blobUrl, "_blank", "noopener,noreferrer");
+  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
 }

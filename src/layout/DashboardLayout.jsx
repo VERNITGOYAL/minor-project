@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronRight, HelpCircle, Menu } from "lucide-react";
 import { Outlet, useLocation } from "react-router-dom";
 import WorkspaceSidebar from "../components/layout/WorkspaceSidebar";
 import { useAuthStore } from "../store/authStore";
+import { loadPapers } from "../store/paperStore";
 
 const viewNames = {
   "/dashboard": "Home",
@@ -21,6 +22,10 @@ function DashboardLayout() {
   const { pathname } = useLocation();
   const { user } = useAuthStore();
   const activeView = viewNames[pathname] || "Workspace";
+
+  useEffect(() => {
+    loadPapers().catch(() => {});
+  }, [user?.id]);
 
   return (
     <div className="flex min-h-screen bg-[#f6f8fa]">
