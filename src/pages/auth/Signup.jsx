@@ -6,7 +6,6 @@ import {
   Check,
   Eye,
   EyeOff,
-  GraduationCap,
   LockKeyhole,
   Mail,
   ShieldCheck,
@@ -15,6 +14,7 @@ import {
 
 import { Link, useNavigate } from "react-router-dom";
 
+import paperdiffLogo from "../../assets/paperdiff.png";
 import { signup as signupUser } from "../../store/authStore";
 
 function Signup() {
@@ -142,14 +142,7 @@ function Signup() {
         <div className="absolute -bottom-44 -right-60 h-[560px] w-[560px] rounded-full border border-[#8ccbc41f]" />
 
         <div className="relative z-10 flex items-center gap-2.5 text-lg font-extrabold text-white">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#9bd6cd] text-[#153b56]">
-            <GraduationCap size={19} />
-          </span>
-
-          <span>
-            Research
-            <span className="text-[#79c5bc]">AI</span>
-          </span>
+          <img src={paperdiffLogo} alt="PaperDiff" className="h-20 w-auto object-contain sm:h-24 md:h-28" />
         </div>
 
         <div className="relative z-10 my-auto max-w-[480px] py-8 lg:py-0">

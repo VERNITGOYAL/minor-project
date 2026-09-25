@@ -15,7 +15,9 @@ function getCurrentUser() {
 
 let state = {
   user: getCurrentUser(),
-  isAuthenticated: Boolean(getCurrentUser()),
+  isAuthenticated: Boolean(
+    getCurrentUser() && localStorage.getItem(ACCESS_TOKEN_KEY)
+  ),
   isLoading: false,
   error: "",
 };
@@ -490,4 +492,14 @@ export function useAuthStore() {
     () => state,
     () => state
   );
+}
+
+export function clearStaleSession() {
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  setState({
+    user: null,
+    isAuthenticated: false,
+    error: "",
+  });
 }

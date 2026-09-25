@@ -150,4 +150,6 @@ def serialize_paper(paper: Paper):
         "size": f"{paper.file_size / 1048576:.1f} MB",
         "file_size": paper.file_size,
         "created_at": paper.created_at.isoformat() if paper.created_at else None,
+        "author": "Uploaded paper",
+        "year": str(paper.created_at.year) if paper.created_at else "",
     }

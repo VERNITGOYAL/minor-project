@@ -10,6 +10,11 @@ async function parseResponse(response, fallback) {
   const data = await response.json();
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem("researchai-session");
+      window.dispatchEvent(new CustomEvent("researchai:auth-expired"));
+    }
     throw new Error(data.detail || fallback);
   }
 

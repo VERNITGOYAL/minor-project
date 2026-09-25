@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Eye, EyeOff, GraduationCap, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import paperdiffLogo from "../../assets/paperdiff.png";
 import { requestPasswordReset, resetPassword } from "../../store/authStore";
 
 function PasswordReset() {
@@ -80,7 +81,7 @@ function PasswordReset() {
   return (
     <main className="grid min-h-screen bg-[#fbfcfd] lg:grid-cols-[minmax(420px,0.9fr)_minmax(480px,1.1fr)]">
       <section className="relative flex min-h-[260px] flex-col overflow-hidden bg-[#153b56] px-6 py-7 text-white sm:px-12 lg:min-h-screen lg:px-[8vw] lg:py-10">
-        <div className="relative z-10 flex items-center gap-2.5 text-lg font-extrabold"><span className="grid h-8 w-8 place-items-center rounded-lg bg-[#9bd6cd] text-[#153b56]"><GraduationCap size={19} /></span>Research<span className="text-[#79c5bc]">AI</span></div>
+        <div className="relative z-10 flex items-center gap-2.5 text-lg font-extrabold"><img src={paperdiffLogo} alt="PaperDiff" className="h-20 w-auto object-contain sm:h-24 md:h-28" /></div>
         <div className="relative z-10 my-auto max-w-[430px] py-10 lg:py-0"><p className="mb-4 text-[10px] font-extrabold tracking-[1.8px] text-[#64b8b0]">ACCOUNT SECURITY</p><h1 className="font-serif text-[48px] leading-none text-white">A fresh start for your workspace.</h1><p className="mt-6 max-w-[360px] text-sm leading-7 text-[#bdd0d5]">Verify your email and create a new password securely.</p></div>
       </section>
       <section className="flex items-center justify-center px-5 py-10 sm:px-10 lg:px-[7vw]"><div className="w-full max-w-[390px]"><Link to="/login" className="mb-10 inline-flex items-center gap-2 text-xs font-bold text-[#398798]"><ArrowLeft size={15} /> Back to login</Link><p className="mb-3 text-[10px] font-extrabold tracking-[1.8px] text-[#64a9b0]">PASSWORD RESET</p><h2 className="mb-2 text-[29px] font-bold tracking-[-1px] text-[#173b57]">{step === "email" ? "Forgot your password?" : "Create a new password"}</h2><p className="mb-8 text-[13px] text-[#8795a3]">{step === "email" ? "Enter your account email and we will send a verification code." : `Enter the code sent to ${email.trim().toLowerCase()}.`}</p>
