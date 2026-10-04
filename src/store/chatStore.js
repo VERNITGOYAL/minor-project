@@ -27,6 +27,10 @@ export function addMessage(message) {
   });
 }
 
+export function setMessages(messages) {
+  setState({ messages });
+}
+
 export function setChatLoading(isLoading) {
   setState({
     isLoading,

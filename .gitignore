@@ -49,6 +49,7 @@ build/
 uploads/
 storage/
 media/
+backend/data/chroma_db/
 
 # =========================
 # IDE

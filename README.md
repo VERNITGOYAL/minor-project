@@ -306,12 +306,34 @@ Answer
 Recommended separation:
 
 PDFs          → Supabase Storage
-Paper metadata → SQL database
-Chunks         → database/vector storage
-Embeddings     → vector storage/database
-Chats          → database
-Use the exact RAG/vector implementation already present in your project
-rather than adding a second storage system unnecessarily.
+Paper metadata → PostgreSQL
+Chunks         → Browser IndexedDB
+Embeddings     → Browser IndexedDB
+Chats          → PostgreSQL
+The backend creates chunks and embeddings when a browser has no local cache.
+The browser stores them in IndexedDB, selects relevant chunks for each
+question, and sends only those chunks to the chat API. Chat conversations
+remain in PostgreSQL.
+
+Chat setup for this implementation:
+
+1. Add `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `GROQ_API_KEY` to
+   `backend/.env`. `GROQ_CHAT_MODEL` defaults to the faster
+   `openai/gpt-oss-20b`; set it to another supported Groq model if desired.
+   Keep the Supabase service-role key on the backend only.
+2. Connect `DATABASE_URL` (for example,
+   `postgresql+psycopg2://username:password@localhost:5432/researchai`) to
+   PostgreSQL, then run `backend/sql/chat_schema.sql` to create the chat tables.
+3. If the database already has the old chunk tables, run
+   `backend/sql/remove_postgres_paper_chunks.sql` once to remove them.
+4. Start the backend and frontend, sign in, upload one or more text-based
+   research-paper PDFs, and open Chat assistant. The first question creates
+   chunks and embeddings and caches them in that browser's IndexedDB. Later
+   questions reuse the local cache. Answers cite the matching paper and page.
+
+The embeddings use `sentence-transformers/all-MiniLM-L6-v2` (384 dimensions);
+the answer generation uses Groq. Scanned/image-only PDFs need OCR before
+they can be used for chat.
 
 14. Security
 Create a root .gitignore containing:
@@ -446,7 +468,7 @@ credential and rotate it.
                   │
              ┌────┴────┐
              ▼         ▼
-        SQL Database  Supabase
+        SQL Database  PostgreSQL
                       Storage
                          │
                          ▼

@@ -6,6 +6,7 @@ from app.database.models import User, EmailOTP, Paper
 
 from app.api.routes.papers import router as papers_router
 from app.api.routes.auth import router as auth_router
+from app.api.routes.chat import router as chat_router
 
 
 # Create all database tables
@@ -22,11 +23,12 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-],
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+    ],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +37,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(papers_router)
+app.include_router(chat_router)
 
 
 @app.get("/")

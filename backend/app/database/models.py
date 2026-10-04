@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 from sqlalchemy import (
     Boolean,
@@ -6,7 +7,9 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    JSON,
     String,
+    Text,
 )
 from sqlalchemy.orm import relationship
 
@@ -46,6 +49,11 @@ class User(Base):
 
     papers = relationship(
         "Paper",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    chat_conversations = relationship(
+        "ChatConversation",
         back_populates="user",
         cascade="all, delete-orphan",
     )
@@ -152,3 +160,54 @@ class Paper(Base):
         "User",
         back_populates="papers",
     )
+
+
+class ChatConversation(Base):
+    __tablename__ = "chat_conversations"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    paper_id = Column(
+        Integer,
+        ForeignKey("papers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    title = Column(String(80), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+        index=True,
+    )
+    user = relationship("User", back_populates="chat_conversations")
+    messages = relationship(
+        "ChatMessage",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at, ChatMessage.id",
+    )
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    conversation_id = Column(
+        String(36),
+        ForeignKey("chat_conversations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role = Column(String(16), nullable=False)
+    content = Column(Text, nullable=False)
+    sources = Column(JSON, nullable=False, default=list)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    conversation = relationship("ChatConversation", back_populates="messages")

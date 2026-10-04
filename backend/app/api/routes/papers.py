@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -9,11 +10,14 @@ from app.database.connection import get_db
 from app.database.models import User
 from app.database.models import Paper
 from app.services.paper_service import save_paper
+from app.services.rag_service import analyze_paper, delete_paper_index
+from app.services.chat_service import build_paper_chunks
 
 router = APIRouter(
     prefix="/api/papers",
     tags=["Papers"],
 )
+logger = logging.getLogger(__name__)
 
 
 @router.post("/upload")
@@ -56,6 +60,57 @@ def list_papers(
     return {"papers": [serialize_paper(paper) for paper in papers]}
 
 
+@router.post("/{paper_id}/analyze")
+def analyze_uploaded_paper(
+    paper_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    paper = (
+        db.query(Paper)
+        .filter(Paper.id == paper_id, Paper.user_id == current_user.id)
+        .first()
+    )
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found.")
+
+    try:
+        return analyze_paper(paper, current_user.id)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+@router.get("/{paper_id}/chunks")
+def get_paper_chunks(
+    paper_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    paper = (
+        db.query(Paper)
+        .filter(Paper.id == paper_id, Paper.user_id == current_user.id)
+        .first()
+    )
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found.")
+
+    try:
+        return build_paper_chunks(paper)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except Exception as error:
+        logger.exception("Unable to build browser paper chunks")
+        raise HTTPException(
+            status_code=503, detail="Unable to prepare paper chunks."
+        ) from error
+
+
 @router.delete("/{paper_id}")
 def delete_paper(
     paper_id: int,
@@ -89,6 +144,7 @@ def delete_paper(
         except RuntimeError as error:
             raise HTTPException(status_code=502, detail=str(error)) from error
 
+    delete_paper_index(current_user.id, paper.id)
     db.delete(paper)
     db.commit()
 

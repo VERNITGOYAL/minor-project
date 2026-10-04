@@ -1,5 +1,7 @@
-const API_URL = "http://127.0.0.1:8000";
+import { apiFetch } from "./apiClient";
+
 const ACCESS_TOKEN_KEY = "researchai-access-token";
+const analysisRequests = new Map();
 
 function authHeaders() {
   const token = localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -22,18 +24,45 @@ async function parseResponse(response, fallback) {
 }
 
 export async function getPapers() {
-  const response = await fetch(`${API_URL}/api/papers`, {
+  const response = await apiFetch("/api/papers", {
     headers: authHeaders(),
   });
   const data = await parseResponse(response, "Unable to load papers.");
   return data.papers;
 }
 
+export async function getPaperChunks(id) {
+  const response = await apiFetch(`/api/papers/${id}/chunks`, {
+    headers: authHeaders(),
+  });
+  const data = await parseResponse(response, "Unable to prepare paper chunks.");
+  return data.chunks;
+}
+
+export function analyzePaper(id) {
+  if (!analysisRequests.has(id)) {
+    const request = apiFetch(`/api/papers/${id}/analyze`, {
+      method: "POST",
+      headers: authHeaders(),
+    }).then((response) => parseResponse(response, "Unable to analyze paper."));
+
+    analysisRequests.set(id, request);
+    const clearRequest = () => {
+      if (analysisRequests.get(id) === request) {
+        analysisRequests.delete(id);
+      }
+    };
+    request.then(clearRequest, clearRequest);
+  }
+
+  return analysisRequests.get(id);
+}
+
 export async function uploadPaper(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_URL}/api/papers/upload`, {
+  const response = await apiFetch("/api/papers/upload", {
     method: "POST",
     headers: authHeaders(),
     body: formData,
@@ -44,7 +73,7 @@ export async function uploadPaper(file) {
 }
 
 export async function removePaper(id) {
-  const response = await fetch(`${API_URL}/api/papers/${id}`, {
+  const response = await apiFetch(`/api/papers/${id}`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -54,7 +83,7 @@ export async function removePaper(id) {
 }
 
 export async function openPaper(id) {
-  const response = await fetch(`${API_URL}/api/papers/${id}/file`, {
+  const response = await apiFetch(`/api/papers/${id}/file`, {
     headers: authHeaders(),
   });
 

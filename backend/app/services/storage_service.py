@@ -47,5 +47,15 @@ def download_pdf(path: str) -> bytes:
 
 def delete_pdf(path: str) -> None:
     response = requests.delete(_storage_url(path), headers=_headers(), timeout=60)
-    if not response.ok and response.status_code != 404:
-        raise RuntimeError(f"Supabase deletion failed: {response.text}")
+    if response.ok or response.status_code == 404:
+        return
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {}
+
+    if payload.get("code") == "NoSuchKey":
+        return
+
+    raise RuntimeError(f"Supabase deletion failed: {response.text}")

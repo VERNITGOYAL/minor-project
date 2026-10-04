@@ -4,6 +4,7 @@ import {
   removePaper,
   uploadPaper,
 } from "../services/paperService";
+import { deletePaperChunkCache } from "../services/paperChunkDatabase";
 
 let state = {
   papers: [],
@@ -39,6 +40,7 @@ export async function addPaperToStore(file) {
 
 export async function removePaperFromStore(id) {
   await removePaper(id);
+  await deletePaperChunkCache(id);
   setState({
     papers: state.papers.filter((paper) => paper.id !== id),
     selectedPaper: state.selectedPaper?.id === id ? null : state.selectedPaper,
@@ -47,6 +49,9 @@ export async function removePaperFromStore(id) {
 
 export async function clearAllPapers() {
   await Promise.all(state.papers.map((paper) => removePaper(paper.id)));
+  await Promise.all(
+    state.papers.map((paper) => deletePaperChunkCache(paper.id))
+  );
   setState({ papers: [], selectedPaper: null });
 }
 
